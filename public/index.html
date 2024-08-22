@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+    
+    <script src="/js/script.js"></script>
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main>
+        <div id="game-container" tabindex="0">
+            <p>Score: <span id="score">0</span></p>
+        </div>
+        <div class="chat-container">
+            <h3>Chat</h3>
+            <ul id="chat"></ul>
+            <form name="form-message" class="form-message" action="">
+                <input name="message" type="text" placeholder="Escribe un mensaje" disabled>
+                <button class="btn green" type="submit" disabled>Enviar</button>
+            </form>
+        </div>
+    </main>
+
+    <dialog>
+        <form class="player-form" method="dialog">
+            <label>
+                Ingresa tu nombre
+                <input name="playerName" type="text" placeholder="Anonimo">
+            </label>
+            <button class="btn green" type="submit">Listo</button>
+        </form>
+    </dialog>
+</body>
+</html>

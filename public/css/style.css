@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+main {
+    background-color: #222;
+    height: 100vh;
+    display: flex;
+}
+
+#game-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-basis: 0;
+    flex-grow: 5;
+}
+
+#game-container > p {
+    padding: 12px;
+    color: #eee;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+canvas {
+    border: 8px solid #666;
+    background-color: #eee;
+}
+
+.btn {
+    padding: 12px;
+    border: none;
+    cursor: pointer;
+
+}
+
+.btn.green {
+    font-weight: bold;
+    color: #eee;
+    background-color: #0d0;
+}
+
+.btn:disabled {
+    background-color: #aaa !important;
+    color: #000 !important;
+}
+
+.btn.green:hover, .btn.green:focus {
+    background-color: #3d3;
+}
+
+.chat-container {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #111;
+    flex-basis: 0;
+    flex-grow: 2;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-container h3 {
+    padding: 16px;
+    text-align: center;
+    border-bottom: 2px solid #555;
+    color: #eee;
+}
+
+#chat {
+    padding: 12px;
+    flex-grow: 1;
+    overflow-y: scroll;
+
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+
+    list-style: none;
+    font-size: 14px;
+}
+
+.form-message {
+    width: 100%;
+    padding: 4px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+}
+
+.form-message input {
+    padding: 8px;
+    flex-grow: 1;
+    background-color: #333;
+    border: none;
+    outline: 2px solid #888;
+    color: #eee;
+}
+
+dialog {
+    background-color: #222;
+    color-scheme: dark;
+    margin: auto;
+    
+}
+
+.player-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.player-form input {
+    padding: 8px;
+    border-radius: 0;
+    border: none;
+    outline: 1px solid #666;
+}
+
+.player-form input:focus {
+    outline: 2px solid #0a0;
+}
+
+.player-form button {
+    flex-grow: 1;
+
+}
