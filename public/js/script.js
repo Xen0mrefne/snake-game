@@ -383,7 +383,7 @@ function printMessage(message, color = null) {
     chat.append(li);
 
     chat.scroll({
-        top: chat.clientHeight
+        top: 9999
     })
 }
 
@@ -392,7 +392,7 @@ function updatePlayerList(players) {
 
     playerList.innerHTML = "";
 
-    players.sort((a, b) => {a.score > b.score});
+    players.sort((a, b) => b.currentScore - a.currentScore);
 
     for (const player of players) {
         const li = document.createElement("li");
