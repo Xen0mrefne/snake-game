@@ -234,6 +234,10 @@ function nextFrame() {
     if (GAME.food.consumed) {
         const positions = availablePositions();
         setScore(GAME.score + 1);
+        
+        const foodEvent = new Event("foodconsumed");
+        canvas.dispatchEvent(foodEvent);
+
         if (positions.length > 0) {
             spawnFood(positions);
         } else {
@@ -364,7 +368,7 @@ function startGame() {
 
 let playerName;
 
-function message(message, color = null) {
+function printMessage(message, color = null) {
     const chat = document.getElementById("chat");
     
     const li = document.createElement("li");
@@ -383,14 +387,71 @@ function message(message, color = null) {
     })
 }
 
+function updatePlayerList(players) {
+    const playerList = document.getElementById("players");
+
+    playerList.innerHTML = "";
+
+    players.sort((a, b) => {a.score > b.score});
+
+    for (const player of players) {
+        const li = document.createElement("li");
+        const name = document.createElement("span")
+        const score = document.createElement("span")
+
+        name.textContent = player.name;
+        score.textContent = player.currentScore;
+
+        li.append(name, score)
+
+        playerList.append(li)
+    }
+}
+
+class SocketEvents {
+    players = []
+
+    constructor (socket) {
+        this.socket = socket
+    }
+
+    arrived(e) {
+        const {playerName, players} = JSON.parse(e);
+        printMessage("El jugador " + playerName + " se ha conectado.");
+        this.players = players;
+        updatePlayerList(this.players)
+    }
+    foodconsumed(e) {
+        const {players} = JSON.parse(e);
+        this.players = players;
+        updatePlayerList(this.players);
+    }
+    gameover(e) {
+        const { playerName, score, players } = JSON.parse(e);
+        printMessage("El jugador " + playerName + " ha terminado una partida con " + score + " puntos!", "#0a0");
+        this.players = players
+        updatePlayerList(this.players);
+    }
+    gamestart(e) {
+        printMessage("El jugador " + e + " ha comenzado una partida!");
+    }
+    message(e) {
+        const { playerName, message } = JSON.parse(e);
+        printMessage(playerName + ": " + message);
+    }
+    playerleft(e) {
+        const {playerName} = JSON.parse(e);
+        printMessage(playerName + " se ha ido.", "#f33");
+        this.players = this.players.filter(player => player.name !== playerName);
+        updatePlayerList(this.players);
+    }
+}
+
 window.addEventListener("load", () => {
-    const gameContainer = document.getElementById("game-container")
     canvas.width = GAME.squares * GAME.squareSize;
     canvas.height = GAME.squares * GAME.squareSize;
 
-    gameContainer.prepend(canvas)
-
-    const formMessage = document.forms["form-message"]
+    document.getElementById("game").append(canvas)
 
     const dialog = document.querySelector("dialog");
     dialog.showModal();
@@ -402,55 +463,74 @@ window.addEventListener("load", () => {
         playerName = formPlayer.elements["playerName"].value !== "" ? formPlayer.elements["playerName"].value : "Anonimo" + Math.floor(Math.random() * 3000);
         formPlayer.reset();
 
-        gameContainer.focus();
+        document.getElementById("game-container").focus();
 
         const socket = io();
 
+        const socketEvents = new SocketEvents(socket);
+
         socket.on("connect", () => {
 
-            socket.emit("arrived", playerName);
+            socket.volatile.emit("arrived", playerName);
 
-            socket.on("arrived", e => {
-                message("El jugador " + e + " se ha conectado.");
-            })
+            socket.on("arrived", socketEvents.arrived)
             
-            message("Te has conectado a la sala. Escribe un mensaje!")
+            printMessage("Te has conectado a la sala. Escribe un mensaje!")
 
             canvas.addEventListener("gameover", () => {
-                socket.emit("score", JSON.stringify({playerName, score: GAME.score}));
+                socket.volatile.emit("gameover", JSON.stringify({score: GAME.score}));
             })
 
             canvas.addEventListener("gamestart", () => {
-                socket.emit("gamestart", JSON.stringify({playerName}));
+                socket.volatile.emit("gamestart", "");
             })
 
-            socket.on("gamestart", (e) => {
-                const { playerName } = JSON.parse(e);
-                message("El jugador " + playerName + " ha comenzado una partida!");
+            canvas.addEventListener("foodconsumed", () => {
+                socket.volatile.emit("foodconsumed", "");
             })
 
-            socket.on("score", e => {
-                const { playerName, score } = JSON.parse(e);
-                message("El jugador " + playerName + " ha terminado una partida con " + score + " puntos!", "#0a0");
-            })
+            socket.on("gamestart", socketEvents.gamestart)
 
-            socket.on("message", e => {
-                const { playerName, text } = JSON.parse(e);
-                message(playerName + ": " + text);
-            })
+            socket.on("gameover", socketEvents.gameover)
+
+            socket.on("foodconsumed", socketEvents.foodconsumed)
+
+            socket.on("message", socketEvents.message)
+
+            socket.on("playerleft", socketEvents.playerleft)
+
+            function sendMessage(e) {
+                e.preventDefault();
+                            
+                if (e.target.elements["message"].value.length < 1) return;
+            
+                socket.volatile.emit("message", e.target.elements["message"].value);
+            
+                e.target.reset();
+            }
+
+            const formMessage = document.forms["form-message"];
 
             for (const element of formMessage.elements) {
                 element.removeAttribute("disabled")
             }
 
-            formMessage.addEventListener("submit", (e) => {
-                e.preventDefault();
-                
-                if (formMessage.elements["message"].value.length < 1) return;
+            formMessage.addEventListener("submit", sendMessage);
 
-                socket.emit("message", JSON.stringify({playerName, text: formMessage.elements["message"].value}));
+            socket.on("disconnect", () => {
+                for (const element of formMessage.elements) {
+                    element.setAttribute("disabled", "")
+                }
 
-                formMessage.reset();
+                formMessage.removeEventListener("submit", sendMessage);
+
+                printMessage("Se ha perdido la conexion con la sala", "#f33")
+                socket.off("arrived", socketEvents.arrived)
+                socket.off("playerleft", socketEvents.playerleft);
+                socket.off("score", socketEvents.score);
+                socket.off("gamestart", socketEvents.gamestart);
+                socket.off("message", socketEvents.message);
+                socket.removeAllListeners("disconnect");
             })
 
         })
